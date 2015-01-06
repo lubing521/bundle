@@ -53,6 +53,8 @@ public class SerialComm
 		Util.UtilPrintln("serialcomm start() begin");
 		boolean Flag = true;
 		m_Context = Context;
+		// 同维要求GuogeeSetMsgConfig必须在usbRegister注册之前
+		m_GuogeeMsg = new GuogeeSetMsgConfig(m_Context); /*创建一个实例，接收USB消息*/
 		ServiceReference ref = m_Context.getServiceReference(CtUsbService.class.getName());
 		m_UsbService = (CtUsbService) m_Context.getService(ref);
 		RegisterUSB();
@@ -67,7 +69,6 @@ public class SerialComm
 		m_ThreadReadFlag = true;
 		m_ThreadRead = new m_ThreadRead("read");
 		m_ThreadRead.start();
-		m_GuogeeMsg = new GuogeeSetMsgConfig(m_Context); /*创建一个实例，接收USB消息*/
 		Util.UtilPrintln("serialcomm startThread() end : " + Flag);
 		return Flag;
 	}
