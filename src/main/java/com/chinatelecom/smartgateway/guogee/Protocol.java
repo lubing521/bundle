@@ -4,6 +4,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.osgi.framework.*;
@@ -20,6 +22,8 @@ public class Protocol
 	private ThreadKeepAlive m_ThreadAlive;
 	private boolean m_ThreadAliveFlag;
 	
+	private volatile List<SmartNode> nodeStatusList;
+	private Iterator<SmartNode> m_NodeIterator;
 	
 	private static Protocol instance; 
 	private Protocol()
@@ -32,6 +36,9 @@ public class Protocol
 		m_GatewayMac = null;
 		m_ThreadAlive = null;
 		m_ThreadAliveFlag = false;
+
+		nodeStatusList = new ArrayList<SmartNode>();
+		m_NodeIterator = nodeStatusList.iterator();
 	}
 	public static Protocol getInstance()
 	{
@@ -106,7 +113,6 @@ public class Protocol
 	        	Util.UtilPrintln("keep alive GatewayMac success");
 	        	while (m_ThreadAliveFlag && null != m_GatewayMac)
 	        	{
-	        		senRequestOfPoint();
 	        		if (!m_RemoteFlag)
 	        		{
 	        			ISmartFrame GetRemoveSerFrame = PackGetRemoveSer();
@@ -156,6 +162,7 @@ public class Protocol
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					senRequestOfPoint();
 	        	}
 	        }
 	        Util.UtilPrintln("thread KeepAlive exit");
@@ -230,7 +237,7 @@ public class Protocol
 		}
 		
 		//更新节点列表
-		SerialComm.getInstance().addQueryRequest(SerialFrame);
+		addQueryRequest(SerialFrame);
 		
 		if (0 == SerialFrame.GetIP())
 		{
@@ -310,7 +317,7 @@ public class Protocol
 			queryByte[42] = dataLength[0];
 			queryByte[43] = dataLength[1];
 			System.arraycopy(getSourceByte, 44, queryByte, 44, 2);
-			List<SmartNode>  nodeStatusList = SerialComm.getInstance().getNodeStatusList();
+//			List<SmartNode>  nodeStatusList = SerialComm.getInstance().getNodeStatusList();
 			int length = nodeStatusList.size();
 			for (int i = 0; i < length; i++) {
 				queryByte[46 + i*5] = nodeStatusList.get(i).getShortMac()[0];
@@ -432,20 +439,39 @@ public class Protocol
 		return GetRemoveSer;
 	}
 	
-	private List<byte[]> senRequestOfPoint()
+	public ISmartFrame PackQueryNode(SmartNode node)
 	{
-		List<byte[]> taskList = new ArrayList<byte[]>();
-		List<SmartNode> nodes = SerialComm.getInstance().getNodeStatusList();
-		for (SmartNode node : nodes) {
-			byte[] task = new byte[46];
-			System.arraycopy(new byte[]{(byte)0xAA,0x55,0x0,0x2E,0x0,0x00,0x00,0x0,0x0,0x00,0x00,0x00}, 0, task, 0, 12);
-			System.arraycopy(node.getMac(), 0, task, 12, node.getMac().length);
-			System.arraycopy(new byte[]{(byte) 0x01,(byte) 0x02,(byte) 0x03,(byte) 0x04,(byte) 0xD6,(byte) 0xED,0x0,0x0,0x0,0x0,0x0,0x0,(byte) 0x0,0x0,0x0,0x1,0x1,0x00,0x0,0x10,0x1,(byte) 0xFF,0x0,0x0,0x0,0x0}, 0, task, 20, 26);
-			task[39] = node.getType();
-			task[41] = (byte)0xFF;
-			taskList.add(task);
+		ISmartFrame QueryNodeFrame = new ISmartFrame();
+		QueryNodeFrame.FillAA55();
+		QueryNodeFrame.SetFrameLength((short) 46);
+		QueryNodeFrame.SetDev(node.getType());
+		QueryNodeFrame.SetVer((byte) 1);
+		QueryNodeFrame.SetFun((byte) 0xFF);
+		if (null != m_GatewayMac)
+		{
+			QueryNodeFrame.SetSourceMac(m_GatewayMac);
 		}
-		return taskList;
+
+		QueryNodeFrame.SetTargetMac(node.getMac());
+		QueryNodeFrame.FillIP(0x01020304);
+		QueryNodeFrame.FillCRC();
+		return QueryNodeFrame;
+	}
+
+	private void senRequestOfPoint()
+	{
+		if (m_NodeIterator.hasNext())
+		{
+			SmartNode node = (SmartNode) m_NodeIterator.next();
+			ISmartFrame QueryNodeFrame = PackQueryNode(node);
+			SerialComm.getInstance().write(QueryNodeFrame.GetStrData(), QueryNodeFrame.GetSize());
+		}
+		else
+		{
+			m_NodeIterator = nodeStatusList.iterator();
+		}
+
+		return;
 	}
 	
 	public int getCtrlIP() {
@@ -472,5 +498,56 @@ public class Protocol
 	public void setDataPort(short dataPort) {
 		m_DataPort = dataPort;
 	}
+
+	// 查询某个节点状态,若原不存在，则插入List中，若存在则更新  LZP
+	public void addQueryRequest(ISmartFrame frame) {// 地址2个字节 1个字节的类型 1个字节的状态
+													// 1个字节的时间
+		boolean hasFlag = true;
+		SmartNode node = new SmartNode();
+		switch (frame.GetDev()) {
+		case SmartNode.PROTOCOL_TYPE_COLORLIGHT:
+			SmartNode.GetItemFromColorLight(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_ONELIGNT:
+			SmartNode.GetItemFromOneLight(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_TWOLIGNT:
+			SmartNode.GetItemFromTwoLight(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_THREELIGNT:
+			SmartNode.GetItemFromThreeLight(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_FOURLIGNT:
+			SmartNode.GetItemFromFourLight(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_POWERSOCKET:
+			SmartNode.GetItemFromColorLight(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_CONTROLSOCKET:
+			SmartNode.GetItemFromControlSocket(frame, node);
+			break;
+		case SmartNode.PROTOCOL_TYPE_GATEWAY:/* 网关不提取节点信息 */
+			return;
+		default:
+			SmartNode.GetItemFromAny(frame, node);
+			break;
+		}
+		if(nodeStatusList.size() > 0){
+			for (SmartNode nodeTemp : nodeStatusList) {
+				if(Arrays.equals(frame.GetSourceMac(), nodeTemp.getMac())){
+					//若存在，更新状态与时间
+					nodeTemp.setStatus(frame.GetData()[0]);
+					nodeTemp.setTime(System.currentTimeMillis());
+					hasFlag = false;
+					break;
+				}
+			}
+		}
+		if (hasFlag) {
+			// Add into nodeStatusList
+			nodeStatusList.add(node);
+		}
+	}
+
 }
 

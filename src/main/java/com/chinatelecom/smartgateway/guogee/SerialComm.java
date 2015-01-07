@@ -1,9 +1,5 @@
 package com.chinatelecom.smartgateway.guogee;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.*;
@@ -24,7 +20,6 @@ public class SerialComm
 	private GuogeeSetMsgConfig m_GuogeeMsg;
 	private long m_lTimeWrite;
 	
-	private volatile List<SmartNode> nodeStatusList;
 
 	private SerialComm()
 	{
@@ -37,7 +32,6 @@ public class SerialComm
 		m_ThreadReadFlag = false;
 		m_GuogeeMsg = null;
 		m_lTimeWrite = 0;
-		nodeStatusList = new ArrayList<SmartNode>();
 	}
 	public static SerialComm getInstance()
 	{
@@ -513,61 +507,6 @@ public class SerialComm
 	        Util.UtilPrintln("thread serialComm exit");
 	    }
 	}
-	
-	
-	public List<SmartNode> getNodeStatusList()
-	{
-		return this.nodeStatusList;
-	}
-	// 查询某个节点状态,若原不存在，则插入List中，若存在则更新  LZP
-	public void addQueryRequest(ISmartFrame frame) {// 地址2个字节 1个字节的类型 1个字节的状态
-													// 1个字节的时间
-		boolean hasFlag = true;
-		SmartNode node = new SmartNode();
-		switch (frame.GetDev()) {
-		case SmartNode.PROTOCOL_TYPE_COLORLIGHT:
-			SmartNode.GetItemFromColorLight(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_ONELIGNT:
-			SmartNode.GetItemFromOneLight(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_TWOLIGNT:
-			SmartNode.GetItemFromTwoLight(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_THREELIGNT:
-			SmartNode.GetItemFromThreeLight(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_FOURLIGNT:
-			SmartNode.GetItemFromFourLight(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_POWERSOCKET:
-			SmartNode.GetItemFromColorLight(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_CONTROLSOCKET:
-			SmartNode.GetItemFromControlSocket(frame, node);
-			break;
-		case SmartNode.PROTOCOL_TYPE_GATEWAY:/* 网关不提取节点信息 */
-			return;
-		default:
-			SmartNode.GetItemFromAny(frame, node);
-			break;
-		}
-		if(nodeStatusList.size() > 0){
-			for (SmartNode nodeTemp : nodeStatusList) {
-				if(Arrays.equals(frame.GetSourceMac(), nodeTemp.getMac())){
-					//若存在，更新状态与时间
-					nodeTemp.setStatus(frame.GetData()[0]);
-					nodeTemp.setTime(System.currentTimeMillis());
-					hasFlag = false;
-					break;
-				}
-			}
-		}		
-		if (hasFlag) {
-			// Add into nodeStatusList
-			nodeStatusList.add(node);
-		}
 
-	}
 	
 }

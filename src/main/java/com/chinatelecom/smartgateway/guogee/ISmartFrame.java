@@ -251,4 +251,11 @@ public class ISmartFrame
 			System.arraycopy(Mac, 0, sourceMac, 0, 8);
 		}
 	}
+	public void SetTargetMac(byte[] Mac)
+	{
+		if (null != Mac)
+		{
+			System.arraycopy(Mac, 0, targetMac, 0, 8);
+		}
+	}
 }
