@@ -113,6 +113,7 @@ public class Protocol
 	        	Util.UtilPrintln("keep alive GatewayMac success");
 	        	while (m_ThreadAliveFlag && null != m_GatewayMac)
 	        	{
+					senRequestOfPoint();
 	        		if (!m_RemoteFlag)
 	        		{
 	        			ISmartFrame GetRemoveSerFrame = PackGetRemoveSer();
@@ -162,7 +163,6 @@ public class Protocol
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					senRequestOfPoint();
 	        	}
 	        }
 	        Util.UtilPrintln("thread KeepAlive exit");
