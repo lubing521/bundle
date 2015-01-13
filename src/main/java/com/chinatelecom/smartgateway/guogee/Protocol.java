@@ -5,9 +5,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-
 import org.osgi.framework.*;
 
 
@@ -23,7 +21,8 @@ public class Protocol
 	private boolean m_ThreadAliveFlag;
 	
 	private volatile List<SmartNode> nodeStatusList;
-	private Iterator<SmartNode> m_NodeIterator;
+//	private Iterator<SmartNode> m_NodeIterator;
+	private int m_nIndex;
 	
 	private static Protocol instance; 
 	private Protocol()
@@ -38,7 +37,8 @@ public class Protocol
 		m_ThreadAliveFlag = false;
 
 		nodeStatusList = new ArrayList<SmartNode>();
-		m_NodeIterator = nodeStatusList.iterator();
+//		m_NodeIterator = nodeStatusList.iterator();
+		m_nIndex = 0;
 	}
 	public static Protocol getInstance()
 	{
@@ -460,17 +460,22 @@ public class Protocol
 
 	private void senRequestOfPoint()
 	{
-		if (m_NodeIterator.hasNext())
+		if (nodeStatusList.size() == 0)
 		{
-			SmartNode node = (SmartNode) m_NodeIterator.next();
-			ISmartFrame QueryNodeFrame = PackQueryNode(node);
-			SerialComm.getInstance().write(QueryNodeFrame.GetStrData(), QueryNodeFrame.GetSize());
+			return;
 		}
-		else
+		
+		if (m_nIndex < 0 || m_nIndex >= nodeStatusList.size())
 		{
-			m_NodeIterator = nodeStatusList.iterator();
+			m_nIndex = 0;
 		}
 
+		SmartNode node = (SmartNode) nodeStatusList.get(m_nIndex);
+		m_nIndex++;
+		
+		ISmartFrame QueryNodeFrame = PackQueryNode(node);
+		SerialComm.getInstance().write(QueryNodeFrame.GetStrData(), QueryNodeFrame.GetSize());
+		
 		return;
 	}
 	
