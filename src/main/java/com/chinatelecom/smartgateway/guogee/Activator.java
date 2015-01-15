@@ -36,9 +36,9 @@ public class Activator implements BundleActivator {
 	public void stop(BundleContext bundleContext) throws Exception {
 		Activator.context = null;
 
-		NetComm.getInstance().stop();
 		Protocol.getInstance().stop();
 		SerialComm.getInstance().stop();
+		NetComm.getInstance().stop();
 	}
 
 }

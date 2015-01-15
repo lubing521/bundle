@@ -18,7 +18,7 @@ public class SerialComm
 	private boolean  m_ThreadReadFlag;
 	@SuppressWarnings("unused")
 	private GuogeeSetMsgConfig m_GuogeeMsg;
-	private long m_lTimeWrite;
+//	private long m_lTimeWrite;
 	
 
 	private SerialComm()
@@ -31,7 +31,7 @@ public class SerialComm
 		m_ThreadRead = null;
 		m_ThreadReadFlag = false;
 		m_GuogeeMsg = null;
-		m_lTimeWrite = 0;
+//		m_lTimeWrite = 0;
 	}
 	public static SerialComm getInstance()
 	{
@@ -120,7 +120,7 @@ public class SerialComm
 				e.printStackTrace();
 			}
 			String strWrite = m_UsbService.usbWrite(m_fd, StrData, 0, Len);
-			m_lTimeWrite = System.currentTimeMillis();
+//			m_lTimeWrite = System.currentTimeMillis();
 			Util.UtilPrintln("usbWrite : " + strWrite);
 
 //			try {

@@ -63,6 +63,8 @@ public class NetComm
 		m_ThreadNCFlag = false;
 		m_ThreadNC.interrupt();
 		m_ThreadNC.interrupt();
+		m_ThreadNC.interrupt();
+		m_ThreadNC.interrupt();
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -71,9 +73,24 @@ public class NetComm
 		}
 		m_ThreadNC.interrupt();
 		m_ThreadNC.interrupt();
-
-		m_socket.close();
-		m_socket = null;
+		m_ThreadNC.interrupt();
+		m_ThreadNC.interrupt();
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		m_ThreadNC.interrupt();
+		m_ThreadNC.interrupt();
+		m_ThreadNC.interrupt();
+		m_ThreadNC.interrupt();
+		
+		if (null != m_socket)
+		{
+			m_socket.close();
+			m_socket = null;
+		}
 		m_ThreadNC = null;
 		Util.UtilPrintln("netcomm stop() end ");
 	}
@@ -110,7 +127,7 @@ public class NetComm
 		byte[] arb = new byte[1024];
 		DatagramPacket RecvPacket = new DatagramPacket(arb, arb.length);
 	    public void run(){
-	        //Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
+	        Util.UtilPrintln("thread netcomm start");
 	        while (m_ThreadNCFlag)
 	        {
 	        	boolean Errflag = false;

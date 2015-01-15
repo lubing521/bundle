@@ -80,11 +80,13 @@ public class Protocol
 		ClearGatewarMac();
 		m_ThreadAliveFlag = false;
 		m_ThreadAlive.interrupt();
-		m_ThreadQuery.interrupt();
-		m_ThreadQuery.interrupt();
+		m_ThreadAlive.interrupt();
+		m_ThreadAlive.interrupt();
+		m_ThreadAlive.interrupt();
 		m_ThreadAlive = null;
 		
 		m_ThreadQueryFlag = false;
+		m_ThreadQuery.interrupt();
 		m_ThreadQuery.interrupt();
 		m_ThreadQuery.interrupt();
 		m_ThreadQuery.interrupt();
@@ -343,8 +345,11 @@ public class Protocol
 			byte[] queryByteLength = Util.Short2Byte((short)(46 + 400));
 			queryByte[2] = queryByteLength[0];//长度
 			queryByte[3] = queryByteLength[1];//长度
-			System.arraycopy(m_GatewayMac, 0, queryByte, 4, NetFrame.GetSourceMac().length);//源Mac
-			System.arraycopy(m_GatewayMac, 0, queryByte, 12, NetFrame.GetSourceMac().length);//目标Mac
+			if (null != m_GatewayMac)
+			{
+				System.arraycopy(m_GatewayMac, 0, queryByte, 4, NetFrame.GetSourceMac().length);//源Mac
+				System.arraycopy(m_GatewayMac, 0, queryByte, 12, NetFrame.GetSourceMac().length);//目标Mac
+			}
 //					System.arraycopy(new byte[]{0x0,0x12,0x4B,0x0,0x3,(byte)0x9F,(byte)0xBE,(byte)0xC9}, 0, queryByte, 12, 8);//目标Mac
 			System.arraycopy(getSourceByte, 20, queryByte, 20, 21);//从网络源IP复制到版本号位置
 			queryByte[41] = 0x09;//返回指令
