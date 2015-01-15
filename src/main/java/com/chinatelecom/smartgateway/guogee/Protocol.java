@@ -18,8 +18,10 @@ public class Protocol
 	private short m_DataPort;
 	private byte[] m_GatewayMac;
 	private ThreadKeepAlive m_ThreadAlive;
+	private ThreadQueryNode m_ThreadQuery;
 	private boolean m_ThreadAliveFlag;
-	
+	private boolean m_ThreadQueryFlag;
+
 	private volatile List<SmartNode> nodeStatusList;
 //	private Iterator<SmartNode> m_NodeIterator;
 	private int m_nIndex;
@@ -64,6 +66,10 @@ public class Protocol
 		m_ThreadAliveFlag = true;
 		m_ThreadAlive = new ThreadKeepAlive("keepalive");
 		m_ThreadAlive.start();
+		
+		m_ThreadQueryFlag = true;
+		m_ThreadQuery = new ThreadQueryNode("QueryNode");
+		m_ThreadQuery.start();
 		Util.UtilPrintln("protocol startThread() end : " + Flag);
 		return Flag;
 	}
@@ -74,7 +80,15 @@ public class Protocol
 		ClearGatewarMac();
 		m_ThreadAliveFlag = false;
 		m_ThreadAlive.interrupt();
+		m_ThreadQuery.interrupt();
+		m_ThreadQuery.interrupt();
 		m_ThreadAlive = null;
+		
+		m_ThreadQueryFlag = false;
+		m_ThreadQuery.interrupt();
+		m_ThreadQuery.interrupt();
+		m_ThreadQuery.interrupt();
+		m_ThreadQuery = null;
 		Util.UtilPrintln("protocol stop() end");
 	}
 	
@@ -113,7 +127,7 @@ public class Protocol
 	        	Util.UtilPrintln("keep alive GatewayMac success");
 	        	while (m_ThreadAliveFlag && null != m_GatewayMac)
 	        	{
-					senRequestOfPoint();
+//					senRequestOfPoint();
 	        		if (!m_RemoteFlag)
 	        		{
 	        			ISmartFrame GetRemoveSerFrame = PackGetRemoveSer();
@@ -166,6 +180,26 @@ public class Protocol
 	        	}
 	        }
 	        Util.UtilPrintln("thread KeepAlive exit");
+	    }
+	}
+	
+	class ThreadQueryNode extends Thread
+	{
+		ThreadQueryNode(String name){
+	        super(name);//调用父类带参数的构造方法
+	    }
+	    public void run(){
+	    	while(m_ThreadQueryFlag)
+	    	{
+	    		senRequestOfPoint();
+	    		try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    	}
+	    	Util.UtilPrintln("thread QueryNode exit");
 	    }
 	}
 	
@@ -309,7 +343,8 @@ public class Protocol
 			byte[] queryByteLength = Util.Short2Byte((short)(46 + 400));
 			queryByte[2] = queryByteLength[0];//长度
 			queryByte[3] = queryByteLength[1];//长度
-			System.arraycopy(NetFrame.GetSourceMac(), 0, queryByte, 4, NetFrame.GetSourceMac().length);//源Mac
+			System.arraycopy(m_GatewayMac, 0, queryByte, 4, NetFrame.GetSourceMac().length);//源Mac
+			System.arraycopy(m_GatewayMac, 0, queryByte, 12, NetFrame.GetSourceMac().length);//目标Mac
 //					System.arraycopy(new byte[]{0x0,0x12,0x4B,0x0,0x3,(byte)0x9F,(byte)0xBE,(byte)0xC9}, 0, queryByte, 12, 8);//目标Mac
 			System.arraycopy(getSourceByte, 20, queryByte, 20, 21);//从网络源IP复制到版本号位置
 			queryByte[41] = 0x09;//返回指令
@@ -330,7 +365,7 @@ public class Protocol
 					time = 255;
 				}
 				queryByte[46 + i*5 + 4] = (byte)time;
-				Util.UtilPrintln("curtime: " + System.currentTimeMillis());
+				Util.UtilPrintln("curtime: " + System.currentTimeMillis()/1000);
 				Util.UtilPrintln("time: " 
 						+ Integer.toHexString(queryByte[46 + i*5] & 0xff)
 						+ " "
@@ -462,8 +497,10 @@ public class Protocol
 	{
 		if (nodeStatusList.size() == 0)
 		{
+			Util.UtilPrintln("nodeStatusList null");
 			return;
 		}
+		Util.UtilPrintln("nodeStatusList " + nodeStatusList.size());
 		
 		if (m_nIndex < 0 || m_nIndex >= nodeStatusList.size())
 		{
@@ -547,6 +584,10 @@ public class Protocol
 					break;
 				}
 			}
+		}
+		if (node.getShortMac()[0] == 0 && node.getShortMac()[1] == 0)
+		{
+			hasFlag = false;
 		}
 		if (hasFlag) {
 			// Add into nodeStatusList

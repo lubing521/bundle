@@ -4,7 +4,7 @@
 
   <groupId>com.chinatelecom.smartgateway</groupId>
   <artifactId>com.chinatelecom.smartgateway.guogee</artifactId>
-  <version>1.0.12</version>
+  <version>1.2.0</version>
   <packaging>bundle</packaging>
 
   <name>com.chinatelecom.smartgateway.guogee</name>

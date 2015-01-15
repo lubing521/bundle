@@ -102,16 +102,22 @@ public class SerialComm
 				StrHex += " ";
 			}
 			Util.UtilPrintln("write " + Len + " : " +  StrHex);
-			long lTmpTime = System.currentTimeMillis() - m_lTimeWrite;
-			if (lTmpTime < 30)
-			{
-				//两次write必须间隔30ms
-				try {
-					Thread.sleep(30 - lTmpTime);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+//			long lTmpTime = System.currentTimeMillis() - m_lTimeWrite;
+//			if (lTmpTime < 30)
+//			{
+//				//两次write必须间隔30ms
+//				try {
+//					Thread.sleep(30 - lTmpTime);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+			try {
+				Thread.sleep(25);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			String strWrite = m_UsbService.usbWrite(m_fd, StrData, 0, Len);
 			m_lTimeWrite = System.currentTimeMillis();
