@@ -1,5 +1,8 @@
 package com.chinatelecom.smartgateway.guogee;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.*;
@@ -19,6 +22,7 @@ public class SerialComm
 	@SuppressWarnings("unused")
 	private GuogeeSetMsgConfig m_GuogeeMsg;
 //	private long m_lTimeWrite;
+	private Lock m_lock;
 	
 
 	private SerialComm()
@@ -31,6 +35,7 @@ public class SerialComm
 		m_ThreadRead = null;
 		m_ThreadReadFlag = false;
 		m_GuogeeMsg = null;
+		m_lock = new ReentrantLock();;
 //		m_lTimeWrite = 0;
 	}
 	public static SerialComm getInstance()
@@ -113,13 +118,19 @@ public class SerialComm
 //					e.printStackTrace();
 //				}
 //			}
+			String strWrite;
+			m_lock.lock();
 			try {
-				Thread.sleep(25);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				strWrite = m_UsbService.usbWrite(m_fd, StrData, 0, Len);
+				try {
+					Thread.sleep(30);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} finally {
+				m_lock.unlock();
 			}
-			String strWrite = m_UsbService.usbWrite(m_fd, StrData, 0, Len);
 //			m_lTimeWrite = System.currentTimeMillis();
 			Util.UtilPrintln("usbWrite : " + strWrite);
 
@@ -364,7 +375,7 @@ public class SerialComm
 	    }
 		int nWrite = 0;
 	    public void run(){
-	        //Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
+	        Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
 	        while (m_ThreadReadFlag)
 	        {
 	        	if (1 >= m_StateMachine)

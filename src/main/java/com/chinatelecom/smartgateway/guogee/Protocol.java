@@ -101,7 +101,7 @@ public class Protocol
 	        super(name);//调用父类带参数的构造方法
 	    }
 	    public void run(){
-	        //Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
+	        Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
 	        while (m_ThreadAliveFlag)
 	        {
 	        	try {
@@ -191,6 +191,7 @@ public class Protocol
 	        super(name);//调用父类带参数的构造方法
 	    }
 	    public void run(){
+	    	Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
 	    	while(m_ThreadQueryFlag)
 	    	{
 	    		senRequestOfPoint();

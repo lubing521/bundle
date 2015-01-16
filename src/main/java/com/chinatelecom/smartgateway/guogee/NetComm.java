@@ -127,7 +127,7 @@ public class NetComm
 		byte[] arb = new byte[1024];
 		DatagramPacket RecvPacket = new DatagramPacket(arb, arb.length);
 	    public void run(){
-	        Util.UtilPrintln("thread netcomm start");
+	    	Util.UtilPrintln(" is saled by "+Thread.currentThread().getName());
 	        while (m_ThreadNCFlag)
 	        {
 	        	boolean Errflag = false;
